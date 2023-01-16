@@ -1,4 +1,5 @@
 import axios from "axios";
+import { v4 } from 'uuid';
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Label } from "./types";
@@ -16,8 +17,9 @@ interface InputState {
   error: string;
   loading: boolean;
   updateProduct: (product: string) => void;
-  updateLabels: (label: Label, id: number) => void;
+  updateLabels: (label: Label, id: string) => void;
   newLabel: (type: string) => void;
+  deleteLabel: (id: string) => void;
   setUserInput: (newInput: string) => void;
   loadingOn: () => void;
   loadingOff: () => void;
@@ -49,9 +51,11 @@ export const useStore = create<InputState>()(
         set((state) => ({
           labels: [
             ...state.labels,
-            { id: state.labels.length, label: "", name: "", type: type },
+            { id: v4(), label: "", name: "", type: type },
           ],
         })),
+      
+      deleteLabel: (id) => set((state)=>({labels: state.labels.filter(l => l.id !== id)})),
 
       // store user input
       setUserInput: (newInput) => set({ user_input: newInput }),
@@ -96,10 +100,9 @@ export const useStore = create<InputState>()(
         }
       },
     }),
-
     {
-      name: "input-storage", // name of the item in the storage (must be unique)
-      getStorage: () => localStorage, // (optional) by default, 'localStorage' is used
+      name: "input-storage",
+      getStorage: () => localStorage,
     }
   )
 );
