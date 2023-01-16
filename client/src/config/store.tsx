@@ -1,150 +1,105 @@
 import axios from "axios";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-type Column = {
-  id: number;
-  header: string;
-  column: string;
-};
-
-type Cell = {
-  id: number;
-  header: string;
-  cell: string;
-};
-
-interface InputState {
-  columns: Column[];
-  cells: Cell[];
-  text: string;
-  response: string;
-  error: string;
-  loading: boolean;
-  updateColumns: (column: Column, id: number) => void;
-  updateCells: (cell: Cell, id: number) => void;
-  newColumn: () => void;
-  newCell: () => void;
-  setText: (newText: string) => void;
-  loadingOn: () => void;
-  loadingOff: () => void;
-  getFormula: () => void;
-}
+import { Label } from "./types";
 
 const apiConfig = {
   withCredentials: true,
   timeout: 30000,
 };
 
+interface InputState {
+  product: string
+  labels: Label[];
+  user_input: string;
+  response: string;
+  error: string;
+  loading: boolean;
+  updateProduct: (product: string) => void;
+  updateLabels: (label: Label, id: number) => void;
+  newLabel: (type: string) => void;
+  setUserInput: (newInput: string) => void;
+  loadingOn: () => void;
+  loadingOff: () => void;
+  getFormula: () => void;
+}
+
 export const useStore = create<InputState>()(
-  persist((set, get) => ({
-    // initial states
-    columns: [{ id: 0, header: "", column: "" }],
-    cells: [{ id: 0, header: "", cell: "" }],
-    text: "",
-    response: "",
-    error: "",
-    loading: false,
+  persist(
+    (set, get) => ({
+      // initial states
+      product: "Excel",
+      labels: [],
+      user_input: "",
+      response: "",
+      error: "",
+      loading: false,
 
-    updateColumns: (column, id) =>
-      set((state) => ({
-        columns: state.columns.map((c) => {
-          if (c.id === id) return column;
-          else return c;
-        }),
-      })),
-    updateCells: (cell, id) =>
-      set((state) => ({
-        cells: state.cells.map((c) => {
-          if (c.id === id) return cell;
-          else return c;
-        }),
-      })),
+      updateProduct: (product) => set({product: product}),
 
-    newColumn: () => {
-      const columns = get().columns;
-      if (
-        columns[columns.length - 1].header.length < 1 ||
-        columns[columns.length - 1].column.length < 1
-      ) {
-        set({
-          error:
-            "Please provide column title and column id before adding another column",
-        });
-      } else
+      updateLabels: (label, id) =>
         set((state) => ({
-          columns: [
-            ...state.columns,
-            { id: state.columns.length, header: "", column: "" },
-          ],
-        }));
-    },
-    newCell: () => {
-      const cells = get().cells;
-      if (
-        cells[cells.length - 1].header.length < 1 ||
-        cells[cells.length - 1].cell.length < 1
-      ) {
-        set({
-          error:
-            "Please provide cell title and cell id before adding another cell",
-        });
-      } else
+          labels: state.labels.map((l) => {
+            if (l.id === id) return label;
+            else return l;
+          }),
+        })),
+
+      newLabel: (type: string) =>
         set((state) => ({
-          cells: [
-            ...state.cells,
-            { id: state.cells.length, header: "", cell: "" },
+          labels: [
+            ...state.labels,
+            { id: state.labels.length, label: "", name: "", type: type },
           ],
-        }));
-    },
+        })),
 
-    // store user input
-    setText: (newText) => set({ text: newText }),
+      // store user input
+      setUserInput: (newInput) => set({ user_input: newInput }),
 
-    // loading clears states
-    loadingOn: () =>
-      set((state) => ({ loading: true, response: "", error: "" })),
-    loadingOff: () => set((state) => ({ loading: false })),
+      // loading clears states
+      loadingOn: () => set(() => ({ loading: true, response: "", error: "" })),
+      loadingOff: () => set(() => ({ loading: false })),
 
-    // get formula api call
-    getFormula: async () => {
-      const loadingOn = get().loadingOn;
-      const loadingOff = get().loadingOff;
-      const text = get().text;
-      const columns = get().columns;
-      const cells = get().cells;
+      // get formula api call
+      getFormula: async () => {
+        const loadingOn = get().loadingOn;
+        const loadingOff = get().loadingOff;
+        const product = get().product
+        const user_input = get().user_input;
+        const labels = get().labels;
 
-      if (text.length < 1) {
-        set(() => ({
-          error: "Please enter a prompt",
-          response: "",
-        }));
-      } else {
-        loadingOn();
-        try {
-          await axios
-            .post(
-              "http://localhost:8080/excel/get_formula",
-              { text: text, columns: columns, cells: cells },
-              apiConfig
-            )
-            .then((res) => {
-              if (res.data.data.finish_reason != "stop") {
-                set({ error: "Error, please try again" });
-              } else {
-                set({ response: res.data.data.text });
-              }
-            });
-        } catch (error) {
-          set({ error: "Error, please try again" });
+        if (user_input.length < 1) {
+          set(() => ({
+            error: "Please enter a prompt",
+            response: "",
+          }));
+        } else {
+          loadingOn();
+          try {
+            await axios
+              .post(
+                "http://localhost:8080/get_formula",
+                {product: product, user_input: user_input, labels: labels },
+                apiConfig
+              )
+              .then((res) => {
+                if (res.data.data.finish_reason != "stop") {
+                  set({ error: "Error, please try again" });
+                } else {
+                  set({ response: res.data.data.response });
+                }
+              });
+          } catch (error) {
+            set({ error: "Error, please try again" });
+          }
+          loadingOff();
         }
-        loadingOff();
-      }
-    }
-  }),
-  
-    {
-      name: 'input-storage', // name of the item in the storage (must be unique)
-      getStorage: () => localStorage, // (optional) by default, 'localStorage' is used
+      },
     }),
+
+    {
+      name: "input-storage", // name of the item in the storage (must be unique)
+      getStorage: () => localStorage, // (optional) by default, 'localStorage' is used
+    }
+  )
 );

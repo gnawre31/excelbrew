@@ -28,26 +28,29 @@ app.add_middleware(
 
 
 class Payload(BaseModel):
-    text: str
-    columns: list = []
-    cells: list = []
-def replaceCellLabel(text, payload):
-    for c in payload.columns:
-        if len(c["header"]) > 0 and len(c["column"]) > 0:
-            text = text.replace(c["header"].lower(),"column " + c["column"].upper())
-    for c in payload.cells:
-        if len(c["header"]) > 0 and len(c["cell"]) > 0:
-            text = text.replace(c["header"].lower(),"cell " + c["cell"].upper())
-    return text
+    product: str
+    user_input: str
+    labels: list = []
 
 
-@app.post("/excel/get_formula")
+def replaceCellLabel(payload):
+    user_input = payload.user_input.lower()
+    for c in payload.labels:
+        if len(c["label"]) > 0 and len(c["name"]) > 0:
+            user_input = user_input.replace(c["label"].lower(),c["type"] + " " + c["name"].upper())
+    return user_input
+
+
+@app.post("/get_formula")
 def getFormula(payload:Payload):
 
     # replace words in text with column and cell IDs
-    text = payload.text.lower()
-    text = replaceCellLabel(text, payload)
-    prompt = "Generate an Excel formula to: " + text
+    user_input = replaceCellLabel(payload)
+
+    print(user_input)
+    # return {"data":{"response":"hi","finish_reason":"stop"}}
+
+    prompt = ("Generate an {} formula to: {}").format(payload.product,user_input) 
 
     # call openAI API
     response = openai.Completion.create(
@@ -59,4 +62,4 @@ def getFormula(payload:Payload):
         frequency_penalty=0,
         presence_penalty=0
     )
-    return {"data": {"text":response.choices[0].text, "finish_reason":response.choices[0].finish_reason}}
+    return {"data": {"response":response.choices[0].text, "finish_reason":response.choices[0].finish_reason}}
