@@ -3,11 +3,11 @@ import { useStore } from './config/store'
 
 function App() {
 
-  const text = useStore(state => state.text)
+  const user_input = useStore(state => state.user_input)
   const response = useStore(state => state.response)
   const error = useStore(state => state.error)
   const loading = useStore(state => state.loading)
-  const setText = useStore(state => state.setText)
+  const setUserInput = useStore(state => state.setUserInput)
   const getFormula = useStore(state => state.getFormula)
 
 
@@ -22,7 +22,7 @@ function App() {
       <Headers />
       <form onSubmit={getResponse} className="flex flex-col">
         <label className='mb-4'>Enter text</label>
-        <textarea value={text}  className='mb-4 border h-12' onChange={(e) => setText(e.target.value as string)}/>
+        <textarea value={user_input}  className='mb-4 border h-12' onChange={(e) => setUserInput(e.target.value as string)}/>
         <button type='submit' className='bg-blue-200 w-48 h-12 rounded-xl'>Get Formula</button>
         <p>Response:</p>
         {loading && <p>loading...</p>}
