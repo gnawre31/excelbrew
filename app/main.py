@@ -47,13 +47,14 @@ def getFormula(payload:Payload):
     # replace words in text with column and cell IDs
     user_input = replaceCellLabel(payload)
 
-    print(user_input)
+    # print(user_input)
     # return {"data":{"response":"hi","finish_reason":"stop"}}
 
     prompt = ("Generate an {} formula to: {}").format(payload.product,user_input) 
+    print(prompt)
 
     # call openAI API
-    response = openai.Completion.create(
+    apiResponse = openai.Completion.create(
         model="text-davinci-003",
         prompt=prompt,
         temperature=0,
@@ -62,4 +63,7 @@ def getFormula(payload:Payload):
         frequency_penalty=0,
         presence_penalty=0
     )
-    return {"data": {"response":response.choices[0].text, "finish_reason":response.choices[0].finish_reason}}
+    response = apiResponse.choices[0].text
+    response = response[2:]
+    finish_reason = apiResponse.choices[0].finish_reason
+    return {"data": {"response":response, "finish_reason":finish_reason}}
