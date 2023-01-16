@@ -41,7 +41,7 @@ def replaceCellLabel(text, payload):
     return text
 
 
-@app.post("/get_formula")
+@app.post("/excel/get_formula")
 def getFormula(payload:Payload):
 
     # replace words in text with column and cell IDs

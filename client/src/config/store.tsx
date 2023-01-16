@@ -124,7 +124,7 @@ export const useStore = create<InputState>()(
         try {
           await axios
             .post(
-              "http://localhost:8080/get_formula",
+              "http://localhost:8080/excel/get_formula",
               { text: text, columns: columns, cells: cells },
               apiConfig
             )
