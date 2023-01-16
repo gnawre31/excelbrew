@@ -10,7 +10,7 @@ app = FastAPI()
 
 
 
-openai.api_key = os.environ['OPEN_AI_KEY']
+openai.api_key = os.environ.get('OPEN_AI_KEY')
 
 
 
