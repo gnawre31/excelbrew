@@ -5,19 +5,19 @@ import openai
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+# load env
+from dotenv import load_dotenv
+load_dotenv()
 
+# fastapi init
 app = FastAPI()
 
+# connect openAPI
+openai.api_key = os.getenv('OPEN_AI_KEY')
 
 
-openai.api_key = os.environ.get('OPEN_AI_KEY')
-
-
-
-app = FastAPI()
-
+# CORS
 origins = "http://localhost:5173/"
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -31,7 +31,6 @@ class Payload(BaseModel):
     text: str
     columns: list = []
     cells: list = []
-
 def replaceCellLabel(text, payload):
     for c in payload.columns:
         if len(c["header"]) > 0 and len(c["column"]) > 0:
@@ -42,14 +41,15 @@ def replaceCellLabel(text, payload):
     return text
 
 
-@app.post("/get_formula")
+@app.post("/excel/get_formula")
 def getFormula(payload:Payload):
+
+    # replace words in text with column and cell IDs
     text = payload.text.lower()
     text = replaceCellLabel(text, payload)
-
-    # return {"data":{"text":"hi","finish_reason":"stop"}}
-    print(text)
     prompt = "Generate an Excel formula to: " + text
+
+    # call openAI API
     response = openai.Completion.create(
         model="text-davinci-003",
         prompt=prompt,
